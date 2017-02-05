@@ -17,7 +17,13 @@ module.exports = {
   
     cardDetail: function(card)
     {
-        
+        var result = "";
+        result += 'Owner: ' + card.owner + '\n\r';
+        result += 'Number: ' + card.number + '\n\r';
+        result += 'Expire: ' + card.expiryDate + '\n\r';
+        result += 'Type: ' + card.productI18N + '\n\r';
+        result += 'Credit Card: ' + card.creditCard + '\n\r';
+        return result;
     },
     accountNumber: function(account)
     {

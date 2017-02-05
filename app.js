@@ -116,8 +116,7 @@ bot.dialog('accountDialog', [
     function (session, results) {
         switch (results.response.index) {
             case 0:
-                session.send(ui.accountBalance(session.userData.csasResponse.accounts[session.userData.acountIndex]));
-                session.replaceDialog('accountDialog');
+                session.send(ui.accountBalance(session.userData.accounts.accounts[session.userData.acountIndex]));                
                 break;
             case 1:                
                 api.accountHistory(session, function () {
@@ -128,7 +127,6 @@ bot.dialog('accountDialog', [
                              history += ui.transactionDetail(transaction);
                         }, this);                
                         session.send(history);         
-                        session.replaceDialog('accountDialog');               
                     }                        
                     else 
                     {
@@ -137,8 +135,7 @@ bot.dialog('accountDialog', [
                 });            
                 
                 break;            
-            default:
-                session.replaceDialog('accountDialog');
+            default:                
                 break;
         }
         
@@ -148,11 +145,7 @@ bot.dialog('accountDialog', [
         session.replaceDialog('accountDialog');
     }
 ])
-.reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i })
-.cancelAction('cancelAction', "Canceled.", { 
-      matches: /(^cancel)/i,
-      confirmPrompt: "Are you sure?"
-});
+.reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i });
 
 
 bot.dialog('selectCardMenu', [
@@ -175,7 +168,7 @@ bot.dialog('selectCardMenu', [
     },
     function (session) {
         // Reload menu
-        session.replaceDialog('selectCardsMenu');
+        session.replaceDialog('selectCardMenu');
     }
 ])
 .reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i })
@@ -193,24 +186,21 @@ bot.dialog('cardsDialog', [
                 var cardBalance = ui.cardBalance(session.userData.cards.cards[session.userData.cardIndex]);
                 
                 session.send(cardBalance);
-                session.replaceDialog('cardsDialog');
                 break;
             case 1:                
                 api.cardDetail(session, function () {
                     if(session.userData.authorised) 
                     {
-                        session.send(session.userData.cardDetail);         
-                        session.replaceDialog('cardsDialog');               
+                        session.send(ui.cardDetail(session.userData.card));                
                     }                        
                     else 
                     {
                         session.replaceDialog('authoriseDialog');
                     }    
-                });            
-                
+                });                            
                 break;            
             default:
-                session.replaceDialog('cardsDialog');
+                
                 break;
         }
         
@@ -220,11 +210,7 @@ bot.dialog('cardsDialog', [
         session.replaceDialog('cardsDialog');
     }
 ])
-.reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i })
-.cancelAction('cancelAction', "Canceled.", { 
-      matches: /(^cancel)/i,
-      confirmPrompt: "Are you sure?"
-});
+.reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i });
 
 
 // Setup Restify Server

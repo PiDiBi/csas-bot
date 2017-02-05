@@ -84,14 +84,13 @@ module.exports = {
                     callback();
                     return;
                 }
+                if(response.statusCode == 404)
+                {
+                    console.log('card not found: '+ session.userData.cards.cards[session.userData.cardIndex].id);  
+                    return;
+                }
                 var card = JSON.parse(body);                                        
-                session.userData.cardDetail = "";
-                session.userData.cardDetail += 'Owner: ' + card.owner + '\n\r';
-                session.userData.cardDetail += 'Number: ' + card.number + '\n\r';
-                session.userData.cardDetail += 'Expire: ' + card.expiryDate + '\n\r';
-                session.userData.cardDetail += 'Type: ' + card.productI18N + '\n\r';
-                session.userData.cardDetail += 'Credit Card: ' + card.creditCard + '\n\r';
-
+                session.userData.card = card;                
                 session.userData.authorised = true;
                 callback();
                 //session.send(histText);         
