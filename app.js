@@ -1,6 +1,6 @@
 var restify = require('restify');
 var builder = require('botbuilder');
-var CSAS_API_KEY = '';
+var CSAS_API_KEY = process.env.CSAS_API_KEY;
 // use demo user : 7777777777 / any password
 // WEB-API-KEY
 // var authCallbackUrl = https://api.csas.cz/sandbox/widp/oauth2/auth?state=profil&redirect_uri=https://api.csas.cz/sandbox/widp/oauth2/redirect&client_id=WebExpoClient&response_type=token
