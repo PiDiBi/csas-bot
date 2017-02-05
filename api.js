@@ -62,7 +62,8 @@ module.exports = {
                     session.userData.authorised = false;
                     callback();
                     return;
-                }                 
+                }                
+                
                 var objCards = JSON.parse(body);                                
                 session.userData.cards = objCards;           
                 session.userData.authorised = true;
@@ -86,7 +87,7 @@ module.exports = {
                 }
                 if(response.statusCode == 404)
                 {
-                    console.log('card not found: '+ session.userData.cards.cards[session.userData.cardIndex].id);  
+                    console.log('API call, card not found: '+ session.userData.cards.cards[session.userData.cardIndex].id);  
                     return;
                 }
                 var card = JSON.parse(body);                                        
