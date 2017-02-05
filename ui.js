@@ -46,6 +46,9 @@ module.exports = {
             result = 'Sorry no data availaible.';
         }
         return result;
+    },
+    accountBalance(account){
+        return account.balance.value.format(2, 3, '.', ',') + " " + account.balance.currency
     }
 };
 

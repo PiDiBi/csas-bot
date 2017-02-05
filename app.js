@@ -116,7 +116,7 @@ bot.dialog('accountDialog', [
     function (session, results) {
         switch (results.response.index) {
             case 0:
-                session.send(session.userData.csasResponse.accounts[session.userData.acountIndex].balance.value.format(2, 3, '.', ',') + " " + session.userData.csasResponse.accounts[session.userData.acountIndex].balance.currency);
+                session.send(ui.accountBalance(session.userData.csasResponse.accounts[session.userData.acountIndex]));
                 session.replaceDialog('accountDialog');
                 break;
             case 1:                
