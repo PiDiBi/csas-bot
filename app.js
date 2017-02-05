@@ -192,13 +192,16 @@ bot.dialog('cardsDialog', [
                 api.cardDetail(session, function () {
                     if(session.userData.authorised) 
                     {
-                        session.send(ui.cardDetail(session.userData.card));                
+                        session.send(ui.cardDetail(session.userData.card));         
+                        session.replaceDialog('cardsDialog');       
                     }                        
                     else 
                     {
                         session.replaceDialog('authoriseDialog');
                     }    
                 });                            
+                session.send("API call error, card not found.");
+                session.replaceDialog('cardsDialog');
                 break;            
             default:
                 
