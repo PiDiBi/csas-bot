@@ -190,24 +190,8 @@ bot.dialog('cardsDialog', [
     function (session, results) {
         switch (results.response.index) {
             case 0:
-                var cardBalance = '';
-                var objCards = session.userData.cards;
-                if(objCards.cards[session.userData.cardIndex].balance)
-                {
-                    cardBalance += 'Balance: ' + objCards.cards[session.userData.cardIndex].balance.value + ' ' + objCards.cards[session.userData.cardIndex].balance.currency + '\n\r';
-                }   
-                if(objCards.cards[session.userData.cardIndex].outstandingAmount)
-                {
-                    cardBalance += 'Oustanding ammount: ' + objCards.cards[session.userData.cardIndex].outstandingAmount.value + ' ' + objCards.cards[session.userData.cardIndex].outstandingAmount.currency + '\n\r';
-                }
-                if(objCards.cards[session.userData.cardIndex].limit)
-                {
-                    cardBalance += 'Limit: ' + objCards.cards[session.userData.cardIndex].limit.value + ' ' + objCards.cards[session.userData.cardIndex].limit.currency + '\n\r';
-                }      
-                if(cardBalance=='')
-                {
-                    cardBalance = 'Sorry no data availaible.';
-                }
+                var cardBalance = ui.cardBalance(session.userData.cards.cards[session.userData.cardIndex]);
+                
                 session.send(cardBalance);
                 session.replaceDialog('cardsDialog');
                 break;

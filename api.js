@@ -1,5 +1,4 @@
 var request = require('request');
-var ui = require('./ui');
 var CSAS_API_KEY = process.env.CSAS_API_KEY;
 // api calls
 module.exports = {
