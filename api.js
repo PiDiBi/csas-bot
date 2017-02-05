@@ -1,4 +1,5 @@
 var request = require('request');
+var ui = require('./ui');
 var CSAS_API_KEY = process.env.CSAS_API_KEY;
 // api calls
 module.exports = {
@@ -18,11 +19,7 @@ module.exports = {
                     callback();
                     return;
                 }                 
-                session.userData.csasResponse = JSON.parse(body);                
-                session.userData.accountsPrompt = [];
-                session.userData.csasResponse.accounts.forEach(function(account) {        
-                    session.userData.accountsPrompt.push(account.accountno.number + '/' + account.accountno.bankCode + " - " + account.productI18N );
-                }, this);
+                session.userData.accounts = JSON.parse(body);                                
                 session.userData.authorised = true;
                 callback();
             });                                                
@@ -42,11 +39,9 @@ module.exports = {
                     callback();
                     return;
                 }
-                var history = JSON.parse(body);                                        
-                session.userData.history = "";
-                history.transactions.forEach(function(transaction) {                        
-                    session.userData.history += transaction.amount.value + " " + transaction.amount.currency  + " - " + transaction.description + "\n\r";
-                }, this);                
+                var history = JSON.parse(body); 
+                session.userData.accountHistory = JSON.parse(body);
+                
                 session.userData.authorised = true;
                 callback();
                 //session.send(histText);         
@@ -69,11 +64,7 @@ module.exports = {
                     callback();
                     return;
                 }                 
-                var objCards = JSON.parse(body);                
-                session.userData.cardsPrompt = [];
-                objCards.cards.forEach(function(card) {        
-                    session.userData.cardsPrompt.push(card.owner + '/' + card.number + " - " + card.state );
-                }, this);
+                var objCards = JSON.parse(body);                                
                 session.userData.cards = objCards;           
                 session.userData.authorised = true;
                 callback();

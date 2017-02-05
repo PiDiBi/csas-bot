@@ -1,8 +1,10 @@
 var restify = require('restify');
 var builder = require('botbuilder');
-var api = require('./api');
 var request = require('request');
 var async = require('async');
+
+var api = require('./api');
+var ui = require('./ui');
 
 var CSAS_API_KEY = process.env.CSAS_API_KEY;
 var PORT = process.env.port || process.env.PORT || 3978;
@@ -64,6 +66,7 @@ bot.dialog('authoriseDialog', [
     function (session, results) {
         if (results.response) {
             session.userData.access_token = results.response;
+            // do first call i.e. refreshAccounts
             api.refreshAccounts(session, function () {
                 if(session.userData.authorised) 
                     session.replaceDialog('rootMenu');
@@ -83,8 +86,8 @@ bot.dialog('selectAccountMenu', [
         api.refreshAccounts(session, function () {
             if(session.userData.authorised) 
             {
-                api.refreshCards(session, function (){});
-                builder.Prompts.choice(session, "Select your account", session.userData.accountsPrompt);        
+                api.refreshCards(session, function (){});                                
+                builder.Prompts.choice(session, "Select your account", getAccountsPromt(session));        
             }                
             else 
             {
@@ -120,7 +123,11 @@ bot.dialog('accountDialog', [
                 api.accountHistory(session, function () {
                     if(session.userData.authorised) 
                     {
-                        session.send(session.userData.history);         
+                        var history = '';
+                        session.userData.accountHistory.transactions.forEach(function(transaction) {                        
+                             history += ui.transactionDetail(transaction);
+                        }, this);                
+                        session.send(history);         
                         session.replaceDialog('accountDialog');               
                     }                        
                     else 
@@ -153,8 +160,8 @@ bot.dialog('selectCardMenu', [
         api.refreshCards(session, function () {
             if(session.userData.authorised) 
             {
-                api.refreshAccounts(session, function (){});
-                builder.Prompts.choice(session, "Select your card", session.userData.cardsPrompt);        
+                api.refreshAccounts(session, function (){});                                
+                builder.Prompts.choice(session, "Select your card", getCardsPromt(session));        
             }                
             else
             {
@@ -256,3 +263,19 @@ function authCallback(req, res, next) {
   next();
 }
 
+function getAccountsPromt(session)
+{
+    var accountsPrompt = [];
+    session.userData.accounts.accounts.forEach(function(account) {        
+        accountsPrompt.push(ui.accountNumber(account));
+    }, this);
+    return accountsPrompt;
+}
+function getCardsPromt(session)
+{
+    var cardsPrompt = [];
+    session.userData.cards.cards.forEach(function(card) {        
+        cardsPrompt.push(card.owner + '/' + card.number + " - " + card.state );
+    }, this);
+    return cardsPrompt;
+}
