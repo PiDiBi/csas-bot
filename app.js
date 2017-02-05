@@ -2,7 +2,7 @@ var restify = require('restify');
 var builder = require('botbuilder');
 var CSAS_API_KEY = process.env.CSAS_API_KEY;
 var PORT = process.env.port || process.env.PORT || 3978;
-var HOSTNAME = (process.env.WEBSITE_HOSTNAME || "http:/localhost") + ":" + PORT;
+var HOSTNAME = process.env.WEBSITE_HOSTNAME ? ("https://" + process.env.WEBSITE_HOSTNAME) : ("http://localhost" + ":" + PORT);
 // use demo user : 7777777777 / any password
 // token type url
 var authCallbackUrl = 'https://api.csas.cz/sandbox/widp/oauth2/auth?state=profil&redirect_uri='+HOSTNAME+'/authCallback&client_id=WebExpoClient&response_type=token';
