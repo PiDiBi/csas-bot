@@ -126,7 +126,8 @@ bot.dialog('accountDialog', [
                         session.userData.accountHistory.transactions.forEach(function(transaction) {                        
                              history += ui.transactionDetail(transaction);
                         }, this);                
-                        session.send(history);         
+                        session.send(history);   
+                        session.replaceDialog('accountDialog');      
                     }                        
                     else 
                     {
