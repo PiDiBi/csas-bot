@@ -1,5 +1,9 @@
 var restify = require('restify');
 var builder = require('botbuilder');
+var api = require('./api');
+var request = require('request');
+var async = require('async');
+
 var CSAS_API_KEY = process.env.CSAS_API_KEY;
 var PORT = process.env.port || process.env.PORT || 3978;
 var HOSTNAME = process.env.WEBSITE_HOSTNAME ? ("https://" + process.env.WEBSITE_HOSTNAME) : ("http://localhost" + ":" + PORT);
@@ -9,7 +13,7 @@ var authCallbackUrl = 'https://api.csas.cz/sandbox/widp/oauth2/auth?state=profil
 // code type url
 //var authCallbackUrl = 'https://api.csas.cz/sandbox/widp/oauth2/auth?state=profil&redirect_uri=http://localhost:3978/authCallback&client_id=WebExpoClient&response_type=code';
 var authCodeUrl = 'https://api.csas.cz/sandbox/widp/oauth2/auth';
-var request = require('request');
+
 
 //=========================================================
 // Bot Setup
@@ -26,6 +30,30 @@ var bot = new builder.UniversalBot(connector, [
     }
 ]);
 
+bot.dialog('rootMenu', [
+    function (session) {
+        builder.Prompts.choice(session, "Select", "Accounts|Cards");                          
+    },
+    function (session, results) {
+        switch (results.response.index) {
+            case 0:
+                session.replaceDialog('selectAccountMenu');        
+                break;
+            case 1:
+                session.replaceDialog('selectCardMenu');
+                break;        
+            default:
+                break;
+        }
+        
+    },
+    function (session) {
+        // Reload menu
+        session.replaceDialog('rootMenu');
+    }
+])
+.reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i })
+.triggerAction({ matches: /^(home|\?)/i });;
 
 bot.dialog('authoriseDialog', [
     function (session) {
@@ -36,26 +64,11 @@ bot.dialog('authoriseDialog', [
     function (session, results) {
         if (results.response) {
             session.userData.access_token = results.response;
-            request({
-            method: 'GET',
-            url: 'https://api.csas.cz/sandbox/webapi/api/v3/netbanking/my/accounts?size=&page=&sort=&order=&type=',
-            headers: {
-                'WEB-API-key': CSAS_API_KEY,
-                //'Authorization': 'Bearer demo_001'
-                'Authorization': session.userData.access_token
-            }}, function (error, response, body) {
-                if(response.statusCode==403)
-                {
-                    //session.endDialog("Not authorised.");
-                    session.replaceDialog('authoriseDialog');                    
-                    return;
-                }                 
-                session.userData.csasResponse = JSON.parse(body);                
-                session.userData.accountsPrompt = [];
-                session.userData.csasResponse.accounts.forEach(function(account) {        
-                    session.userData.accountsPrompt.push(account.accountno.number + '/' + account.accountno.bankCode);
-                }, this);
-                session.replaceDialog('rootMenu');
+            api.refreshAccounts(session, function () {
+                if(session.userData.authorised) 
+                    session.replaceDialog('rootMenu');
+                else 
+                    session.replaceDialog('authoriseDialog');
             });            
         }
         else{
@@ -65,32 +78,37 @@ bot.dialog('authoriseDialog', [
 ])
 .reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i });
 
-bot.dialog('rootMenu', [
+bot.dialog('selectAccountMenu', [
     function (session) {
-        if(session.userData.accountsPrompt.length>0)
-        {
-            builder.Prompts.choice(session, "Select your account", session.userData.accountsPrompt);        
-        }   
-        else{
-            session.replaceDialog('authoriseDialog');
-        }                     
+        api.refreshAccounts(session, function () {
+            if(session.userData.authorised) 
+            {
+                api.refreshCards(session, function (){});
+                builder.Prompts.choice(session, "Select your account", session.userData.accountsPrompt);        
+            }                
+            else 
+            {
+                session.replaceDialog('authoriseDialog');
+            }                
+        });                             
     },
     function (session, results) {
         session.userData.acountIndex = results.response.index;        
-        session.beginDialog('accountDialog');
+        session.replaceDialog('accountDialog');
     },
     function (session) {
         // Reload menu
-        session.replaceDialog('rootMenu');
+        session.replaceDialog('selectAccountMenu');
     }
 ])
 .reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i })
-.triggerAction({ matches: /^(accounts|back|\?)/i });;
+.triggerAction({ matches: /^(accounts|\?)/i });;
+
 
 
 bot.dialog('accountDialog', [
     function (session) {
-        builder.Prompts.choice(session, "What do you want to do? (type 'accounts' to return to account selection')", "Show balance|Show history");
+        builder.Prompts.choice(session, "What do you want to do? Type 'accounts' to return to account selection or 'home'", "Show balance|Show history");
     },
     function (session, results) {
         switch (results.response.index) {
@@ -98,28 +116,19 @@ bot.dialog('accountDialog', [
                 session.send(session.userData.csasResponse.accounts[session.userData.acountIndex].balance.value + " " + session.userData.csasResponse.accounts[session.userData.acountIndex].balance.currency);
                 session.replaceDialog('accountDialog');
                 break;
-            case 1:
-                request({
-                    method: 'GET',
-                    url: 'https://api.csas.cz/sandbox/webapi/api/v1/netbanking/my/accounts/id/transactions?dateStart=2014-06-01T00%3A00%3A00%2B02%3A00&dateEnd=2014-06-30T00%3A00%3A00%2B02%3A00',
-                    headers: {
-                        'WEB-API-key': CSAS_API_KEY,
-                        'Authorization': session.userData.access_token
-                    }}, function (error, response, body) {
-                        if(response.statusCode == 403)
-                        {
-                            session.replaceDialog('authoriseDialog');
-                            return;
-                        }
-                        session.userData.history = JSON.parse(body);
-                        console.log('Status:', response.statusCode);
-                        var histText = '';
-                        session.userData.history.transactions.forEach(function(transaction) {                        
-                            histText += transaction.amount.value + " " + transaction.amount.currency  + " - " + transaction.description + "\n\r";
-                        }, this);
-                        session.send(histText);         
+            case 1:                
+                api.accountHistory(session, function () {
+                    if(session.userData.authorised) 
+                    {
+                        session.send(session.userData.history);         
                         session.replaceDialog('accountDialog');               
-                });
+                    }                        
+                    else 
+                    {
+                        session.replaceDialog('authoriseDialog');
+                    }    
+                });            
+                
                 break;            
             default:
                 session.replaceDialog('accountDialog');
@@ -134,7 +143,95 @@ bot.dialog('accountDialog', [
 ])
 .reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i })
 .cancelAction('cancelAction', "Canceled.", { 
-      matches: /(home|^cancel)/i,
+      matches: /(^cancel)/i,
+      confirmPrompt: "Are you sure?"
+});
+
+
+bot.dialog('selectCardMenu', [
+    function (session) {
+        api.refreshCards(session, function () {
+            if(session.userData.authorised) 
+            {
+                api.refreshAccounts(session, function (){});
+                builder.Prompts.choice(session, "Select your card", session.userData.cardsPrompt);        
+            }                
+            else
+            {
+                session.replaceDialog('authoriseDialog');
+            }                 
+        });                             
+    },
+    function (session, results) {
+        session.userData.cardIndex = results.response.index;        
+        session.replaceDialog('cardsDialog');
+    },
+    function (session) {
+        // Reload menu
+        session.replaceDialog('selectCardsMenu');
+    }
+])
+.reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i })
+.triggerAction({ matches: /^(cards|\?)/i });;
+
+
+
+bot.dialog('cardsDialog', [
+    function (session) {
+        builder.Prompts.choice(session, "What do you want to do? Type 'cards' to return to cards selection or 'home'", "Show balance|Show detail");
+    },
+    function (session, results) {
+        switch (results.response.index) {
+            case 0:
+                var cardBalance = '';
+                var objCards = session.userData.cards;
+                if(objCards.cards[session.userData.cardIndex].balance)
+                {
+                    cardBalance += 'Balance: ' + objCards.cards[session.userData.cardIndex].balance.value + ' ' + objCards.cards[session.userData.cardIndex].balance.currency + '\n\r';
+                }   
+                if(objCards.cards[session.userData.cardIndex].outstandingAmount)
+                {
+                    cardBalance += 'Oustanding ammount: ' + objCards.cards[session.userData.cardIndex].outstandingAmount.value + ' ' + objCards.cards[session.userData.cardIndex].outstandingAmount.currency + '\n\r';
+                }
+                if(objCards.cards[session.userData.cardIndex].limit)
+                {
+                    cardBalance += 'Limit: ' + objCards.cards[session.userData.cardIndex].limit.value + ' ' + objCards.cards[session.userData.cardIndex].limit.currency + '\n\r';
+                }      
+                if(cardBalance=='')
+                {
+                    cardBalance = 'Sorry no data availaible.';
+                }
+                session.send(cardBalance);
+                session.replaceDialog('cardsDialog');
+                break;
+            case 1:                
+                api.cardDetail(session, function () {
+                    if(session.userData.authorised) 
+                    {
+                        session.send(session.userData.cardDetail);         
+                        session.replaceDialog('cardsDialog');               
+                    }                        
+                    else 
+                    {
+                        session.replaceDialog('authoriseDialog');
+                    }    
+                });            
+                
+                break;            
+            default:
+                session.replaceDialog('cardsDialog');
+                break;
+        }
+        
+    },
+    function (session) {
+        // Reload menu
+        session.replaceDialog('cardsDialog');
+    }
+])
+.reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i })
+.cancelAction('cancelAction', "Canceled.", { 
+      matches: /(^cancel)/i,
       confirmPrompt: "Are you sure?"
 });
 
@@ -158,3 +255,4 @@ function authCallback(req, res, next) {
     res.end(); 
   next();
 }
+
