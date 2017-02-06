@@ -12,9 +12,9 @@ var PORT = process.env.port || process.env.PORT || 3978;
 var HOSTNAME = process.env.WEBSITE_HOSTNAME ? ("https://" + process.env.WEBSITE_HOSTNAME) : ("http://localhost" + ":" + PORT);
 // use demo user : 7777777777 / any password
 // token type url
-var useServerValidation = false;
+var useServerSideOAuth = false;
 var authCallbackUrl = 'https://api.csas.cz/sandbox/widp/oauth2/auth?state=profil&redirect_uri='+HOSTNAME+'/authCallback&client_id=WebExpoClient&response_type=token';
-// code type url
+// code type url - server side
 var authCallbackUrlCode = 'https://api.csas.cz/sandbox/widp/oauth2/auth?state=profil&redirect_uri='+HOSTNAME+'/authCallbackServer&client_id=WebExpoClient&response_type=code';
 var authCodeUrl = 'https://api.csas.cz/sandbox/widp/oauth2/auth';
 
@@ -73,7 +73,7 @@ bot.dialog('authorizeDialog', [
         session.dialogData.nextDialog = nextDialog; 
         session.userData.accountsPrompt = [];
         session.send("You are not authorised. \n\r Click on the URL to authorize yourself and send me code you will see.");
-        builder.Prompts.text(session, useServerValidation ? authCallbackUrlServer :  authCallbackUrl);            
+        builder.Prompts.text(session, useServerSideOAuth ? authCallbackUrlServer :  authCallbackUrl);            
     },
     function (session, results, next) {
         // next is next waterfall
@@ -193,7 +193,11 @@ bot.dialog('cardsDialog', [
             case 1:                
                 api.cardDetail(session)
                     .then(function(result){
-                            session.send(ui.cardDetail(session.userData.card));         
+                            if(result){
+                                session.send(result);}
+                            else{
+                                session.send(ui.cardDetail(session.userData.card));                                         
+                            }
                             session.replaceDialog('cardsDialog');                               
                         }
                     )        
@@ -251,42 +255,6 @@ function authCallback(req, res, next) {
     res.end(); 
     next();
 }
-// function authCallbackServer(req, res, next) {    
-//     var body = '';
-    
-//     request({
-//         method: 'POST',
-//         url: '',
-//         headers: {
-//             'WEB-API-key': CSAS_API_KEY,
-//             'client_id': 'WebExpoClient',
-//             'client_secret': '201509201300',
-//             'redirect_uri': HOSTNAME + '/authCode',
-//             'grant_type': 'authorization_code',
-//             'code': req.params.code,            
-//         }}, function (error, response, body) {
-//             if(error)
-//             {
-//                 body = "<html><body>"+ error +"</body></html>";                
-//             }
-//             else
-//             {
-//                 body = "<html><body>Close this window.</body></html>";
-//             }                    
-//             res.writeHead(200, {
-//                 'Content-Length': Buffer.byteLength(body),
-//                 'Content-Type': 'text/html'
-//             });
-//             res.write(body);
-//             res.end(); 
-//             next();
-
-//         });
-// }
-// function authCode(req, res, next) {    
-//     req.params.code;
-//     next();
-// }
 
 function getAccountsPromt(session)
 {

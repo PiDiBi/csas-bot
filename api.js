@@ -110,7 +110,6 @@ module.exports = {
                         console.log('API call, card not found: '+ session.userData.cards.cards[session.userData.cardIndex].id);  
                         //reject(new Error('API call, card not found'));
                         resolve("API call, card not found");
-                        return;
                     }
                     else
                     {
