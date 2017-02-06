@@ -43,7 +43,7 @@ var bot = new builder.UniversalBot(connector, [
 
 bot.dialog('rootMenu', [
     function (session) {
-        builder.Prompts.choice(session, "Select", "Accounts|Cards|Building Savings");                          
+        builder.Prompts.choice(session, "Select", "Accounts|Cards");                          
     },
     function (session, results) {
         switch (results.response.index) {
