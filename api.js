@@ -1,103 +1,137 @@
 var request = require('request');
+var Promise = require('bluebird');
 var CSAS_API_KEY = process.env.CSAS_API_KEY;
+
 // api calls
 module.exports = {
   
-  refreshAccounts: function(session, callback)
+  refreshAccounts: function(session)
     {
-        request({
-            method: 'GET',
-            url: 'https://api.csas.cz/sandbox/webapi/api/v3/netbanking/my/accounts?size=&page=&sort=&order=&type=',
-            headers: {
-                'WEB-API-key': CSAS_API_KEY,
-                'Authorization': session.userData.access_token
-            }}, function (error, response, body) {
-                if(response.statusCode==403)
-                {
-                    session.userData.authorised = false;
-                    callback();
-                    return;
-                }                 
-                session.userData.accounts = JSON.parse(body);                                
-                session.userData.authorised = true;
-                callback();
-            });                                                
-    },
-    accountHistory: function(session, callback)
-    {
-        request({
-            method: 'GET',
-            url: 'https://api.csas.cz/sandbox/webapi/api/v1/netbanking/my/accounts/id/transactions?dateStart=2014-06-01T00%3A00%3A00%2B02%3A00&dateEnd=2014-06-30T00%3A00%3A00%2B02%3A00',
-            headers: {
-                'WEB-API-key': CSAS_API_KEY,
-                'Authorization': session.userData.access_token
-            }}, function (error, response, body) {
-                if(response.statusCode == 403)
-                {
-                    session.userData.authorised = false;
-                    callback();
-                    return;
-                }
-                var history = JSON.parse(body); 
-                session.userData.accountHistory = JSON.parse(body);
-                
-                session.userData.authorised = true;
-                callback();
-                //session.send(histText);         
-                //session.replaceDialog('accountDialog');               
+        if (!session) return Promise.reject(new Error("Bad parameter"))
+    
+        return new Promise(function(resolve, reject){            
+            request({
+                method: 'GET',
+                url: 'https://api.csas.cz/sandbox/webapi/api/v3/netbanking/my/accounts?size=&page=&sort=&order=&type=',
+                headers: {
+                    'WEB-API-key': CSAS_API_KEY,
+                    'Authorization': session.userData.access_token
+                }}, function (error, response, body) {
+                    if(error)
+                    {
+                        reject(error);
+                    }
+                    else if(response.statusCode==403)
+                    {
+                        session.userData.accounts = {};
+                        reject(new Error('unauthorized'))
+                    }
+                    else
+                    {
+                        session.userData.accounts = JSON.parse(body);                    
+                        resolve();
+                    }                    
+                });
         });
+                                                        
+    },
+    accountHistory: function(session)
+    {
+        if (!session) return Promise.reject(new Error("Bad parameter"))
+		
+		return new Promise(function(resolve, reject){            
+            request({
+                method: 'GET',
+                url: 'https://api.csas.cz/sandbox/webapi/api/v1/netbanking/my/accounts/id/transactions?dateStart=2014-06-01T00%3A00%3A00%2B02%3A00&dateEnd=2014-06-30T00%3A00%3A00%2B02%3A00',
+                headers: {
+                    'WEB-API-key': CSAS_API_KEY,
+                    'Authorization': session.userData.access_token
+                }}, function (error, response, body) {
+                    if(response.statusCode == 403)
+                    {                    
+                        reject(new Error('unauthorized'));                        
+                    }
+                    else
+                    {
+                        var history = JSON.parse(body); 
+                        session.userData.accountHistory = JSON.parse(body);                                
+                        resolve();
+                    }                    
+            });
+		});
+        
                           
     },
-    refreshCards: function(session, callback)
+    refreshCards: function(session)
     {
-        request({
-            method: 'GET',
-            url: 'https://api.csas.cz/sandbox/webapi/api/v3/netbanking/my/cards?size=&page=&sort=&order=',
-            headers: {
-                'WEB-API-key': CSAS_API_KEY,
-                'Authorization': session.userData.access_token
-            }}, function (error, response, body) {
-                if(response.statusCode==403)
-                {
-                    session.userData.authorised = false;
-                    callback();
-                    return;
-                }                
-                
-                var objCards = JSON.parse(body);                                
-                session.userData.cards = objCards;           
-                session.userData.authorised = true;
-                callback();
-            });                                                
+        if (!session) return Promise.reject(new Error("Bad parameter"))
+		
+		return new Promise(function(resolve, reject){            
+		    request({
+                method: 'GET',
+                url: 'https://api.csas.cz/sandbox/webapi/api/v3/netbanking/my/cards?size=&page=&sort=&order=',
+                headers: {
+                    'WEB-API-key': CSAS_API_KEY,
+                    'Authorization': session.userData.access_token
+                }}, function (error, response, body) {
+                    if(response.statusCode==403)
+                    {                    
+                        reject(new Error('unauthorized'));                        
+                    }                
+                    else{
+                        var objCards = JSON.parse(body);                                
+                        session.userData.cards = objCards;                           
+                        resolve();
+                    }                    
+                });      
+		});
+
+                                                      
     },
-    cardDetail: function(session, callback)
+    cardDetail: function(session)
     {
-        request({
-            method: 'GET',
-            url: 'https://api.csas.cz/sandbox/webapi/api/v3/netbanking/my/cards/' + session.userData.cards.cards[session.userData.cardIndex].id,
-            headers: {
-                'WEB-API-key': CSAS_API_KEY,
-                'Authorization': session.userData.access_token
-            }}, function (error, response, body) {
-                if(response.statusCode == 403)
-                {
-                    session.userData.authorised = false;
-                    callback();
-                    return;
-                }
-                if(response.statusCode == 404)
-                {
-                    console.log('API call, card not found: '+ session.userData.cards.cards[session.userData.cardIndex].id);  
-                    return;
-                }
-                var card = JSON.parse(body);                                        
-                session.userData.card = card;                
-                session.userData.authorised = true;
-                callback();
-                //session.send(histText);         
-                //session.replaceDialog('accountDialog');               
-        });
+        if (!session) return Promise.reject(new Error("Bad parameter"))
+		
+		return new Promise(function(resolve, reject){            
+            request({
+                method: 'GET',
+                url: 'https://api.csas.cz/sandbox/webapi/api/v3/netbanking/my/cards/' + session.userData.cards.cards[session.userData.cardIndex].id,
+                headers: {
+                    'WEB-API-key': CSAS_API_KEY,
+                    'Authorization': session.userData.access_token
+                }}, function (error, response, body) {
+                    if(response.statusCode == 403)
+                    {                    
+                        reject(new Error('unauthorized'));
+                        return;
+                    }
+                    else if(response.statusCode == 404)
+                    {
+                        console.log('API call, card not found: '+ session.userData.cards.cards[session.userData.cardIndex].id);  
+                        //reject(new Error('API call, card not found'));
+                        resolve("API call, card not found");
+                        return;
+                    }
+                    else
+                    {
+                        var card = JSON.parse(body);                                        
+                        session.userData.card = card;                                
+                        resolve();
+                    }
+                    
+            });		
+		});
+
                           
+    },
+    buildingSavings:  function(session)
+    {
+        if (!session) return Promise.reject(new Error("Bad parameter"))
+		
+		return new Promise(function(resolve, reject){            
+		
+		});
+        //https://api.csas.cz/sandbox/webapi/api/v3/netbanking/my/contracts/buildings
     }
 
 

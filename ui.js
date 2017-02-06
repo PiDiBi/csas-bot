@@ -14,7 +14,7 @@ Number.prototype.format = function(n, x, s, c) {
 };
 // UI formatting
 module.exports = {
-  
+    
     cardDetail: function(card)
     {
         var result = "";

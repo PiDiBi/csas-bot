@@ -2,6 +2,7 @@ var restify = require('restify');
 var builder = require('botbuilder');
 var request = require('request');
 var async = require('async');
+var Promise = require('bluebird');
 
 var api = require('./api');
 var ui = require('./ui');
@@ -28,13 +29,21 @@ var connector = new builder.ChatConnector({
 });
 var bot = new builder.UniversalBot(connector, [    
     function (session) {
-        session.beginDialog('authoriseDialog');
+        session.send("Hello... I'm a bank bot.");
+        //session.userData.access_token = "";
+        session.userData.accounts = {};
+        session.beginDialog('rootMenu');
     }
 ]);
+// Send notification as a proactive message
+    // var msg = new builder.Message()
+    //     .text("Bank bot");
+    // bot.send(msg, function (err) {
+    // });
 
 bot.dialog('rootMenu', [
     function (session) {
-        builder.Prompts.choice(session, "Select", "Accounts|Cards");                          
+        builder.Prompts.choice(session, "Select", "Accounts|Cards|Building Savings");                          
     },
     function (session, results) {
         switch (results.response.index) {
@@ -44,6 +53,7 @@ bot.dialog('rootMenu', [
             case 1:
                 session.replaceDialog('selectCardMenu');
                 break;        
+                
             default:
                 break;
         }
@@ -57,43 +67,38 @@ bot.dialog('rootMenu', [
 .reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i })
 .triggerAction({ matches: /^(home|\?)/i });;
 
-bot.dialog('authoriseDialog', [
-    function (session) {
+bot.dialog('authorizeDialog', [
+    function (session, nextDialog) { //, next)
+        session.dialogData.nextDialog = nextDialog; 
         session.userData.accountsPrompt = [];
-        session.send("Hello... I'm a bank bot. You are not authorised. \n\r Click on the URL to authorize yourself and send me code you will see.");
-        builder.Prompts.text(session, authCallbackUrl);                
+        session.send("You are not authorised. \n\r Click on the URL to authorize yourself and send me code you will see.");
+        builder.Prompts.text(session, authCallbackUrl);            
     },
-    function (session, results) {
+    function (session, results, next) {
+        // next is next waterfall
         if (results.response) {
             session.userData.access_token = results.response;
-            // do first call i.e. refreshAccounts
-            api.refreshAccounts(session, function () {
-                if(session.userData.authorised) 
-                    session.replaceDialog('rootMenu');
-                else 
-                    session.replaceDialog('authoriseDialog');
-            });            
+            session.replaceDialog(session.dialogData.nextDialog);
         }
         else{
-            session.replaceDialog('rootMenu');
+            //err();
         }         
-    }    
+    }
 ])
 .reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i });
 
 bot.dialog('selectAccountMenu', [
     function (session) {
-        api.refreshAccounts(session, function () {
-            if(session.userData.authorised) 
-            {
-                api.refreshCards(session, function (){});                                
-                builder.Prompts.choice(session, "Select your account", getAccountsPromt(session));        
-            }                
-            else 
-            {
-                session.replaceDialog('authoriseDialog');
-            }                
-        });                             
+        api.refreshAccounts(session)
+        .then(function(result){
+                builder.Prompts.choice(session, "Select your account", getAccountsPromt(session));
+            }
+        )        
+        .catch(function(e){
+            console.log("Catch handler " + e)
+            authorize(session, 'selectAccountMenu');
+        });
+                
     },
     function (session, results) {
         session.userData.acountIndex = results.response.index;        
@@ -107,8 +112,6 @@ bot.dialog('selectAccountMenu', [
 .reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i })
 .triggerAction({ matches: /^(accounts|\?)/i });;
 
-
-
 bot.dialog('accountDialog', [
     function (session) {
         builder.Prompts.choice(session, "What do you want to do? Type 'accounts' to return to account selection or 'home'", "Show balance|Show history");
@@ -117,23 +120,23 @@ bot.dialog('accountDialog', [
         switch (results.response.index) {
             case 0:
                 session.send(ui.accountBalance(session.userData.accounts.accounts[session.userData.acountIndex]));                
+                session.replaceDialog('accountDialog');          
                 break;
             case 1:                
-                api.accountHistory(session, function () {
-                    if(session.userData.authorised) 
-                    {
-                        var history = '';
-                        session.userData.accountHistory.transactions.forEach(function(transaction) {                        
-                             history += ui.transactionDetail(transaction);
-                        }, this);                
-                        session.send(history);   
-                        session.replaceDialog('accountDialog');      
-                    }                        
-                    else 
-                    {
-                        session.replaceDialog('authoriseDialog');
-                    }    
-                });            
+                api.accountHistory(session)
+                    .then(function(result){
+                            var history = '';
+                            session.userData.accountHistory.transactions.forEach(function(transaction) {                        
+                                    history += ui.transactionDetail(transaction);
+                            }, this);                
+                            session.send(history);   
+                            session.replaceDialog('accountDialog');  
+                        }
+                    )        
+                    .catch(function(e){
+                        console.log("Catch handler " + e)
+                        authorize(session, 'accountDialog');
+                    });
                 
                 break;            
             default:                
@@ -151,17 +154,15 @@ bot.dialog('accountDialog', [
 
 bot.dialog('selectCardMenu', [
     function (session) {
-        api.refreshCards(session, function () {
-            if(session.userData.authorised) 
-            {
-                api.refreshAccounts(session, function (){});                                
-                builder.Prompts.choice(session, "Select your card", getCardsPromt(session));        
-            }                
-            else
-            {
-                session.replaceDialog('authoriseDialog');
-            }                 
-        });                             
+        api.refreshCards(session)
+        .then(function(result){
+                builder.Prompts.choice(session, "Select your card", getCardsPromt(session));    
+            }
+        )        
+        .catch(function(e){
+            console.log("Catch handler " + e)
+            authorize(session, 'selectCardMenu');
+        });                      
     },
     function (session, results) {
         session.userData.cardIndex = results.response.index;        
@@ -189,19 +190,30 @@ bot.dialog('cardsDialog', [
                 session.send(cardBalance);
                 break;
             case 1:                
-                api.cardDetail(session, function () {
-                    if(session.userData.authorised) 
-                    {
-                        session.send(ui.cardDetail(session.userData.card));         
-                        session.replaceDialog('cardsDialog');       
-                    }                        
-                    else 
-                    {
-                        session.replaceDialog('authoriseDialog');
-                    }    
-                });                            
-                session.send("API call error, card not found.");
-                session.replaceDialog('cardsDialog');
+                api.cardDetail(session)
+                    .then(function(result){
+                            session.send(ui.cardDetail(session.userData.card));         
+                            session.replaceDialog('cardsDialog');                               
+                        }
+                    )        
+                    .catch(function(e){
+                        console.log("Catch handler " + e)
+                        session.replaceDialog('cardsDialog');     
+                    });
+                
+                // api.cardDetail(session, function () {
+                //     session.send(ui.cardDetail(session.userData.card));         
+                //     session.replaceDialog('cardsDialog');                               
+                // },
+                // authorize(session, function(){
+                //     session.replaceDialog('cardsDialog', results);
+                // }),                           
+                // function(){
+                //     // error
+                //     session.send("API call error, card not found.");
+                //     session.replaceDialog('cardsDialog');
+                // });
+                
                 break;            
             default:
                 
@@ -253,3 +265,7 @@ function getCardsPromt(session)
     }, this);
     return cardsPrompt;
 }
+ function authorize(session, nextDialog)
+    {        
+        session.replaceDialog('authorizeDialog', nextDialog);
+    }
