@@ -43,7 +43,7 @@ bot.on('contactRelationUpdate', function (message) {
         var name = message.user ? message.user.name : null;
         var reply = new builder.Message()
                 .address(message.address)
-                .text("Hello %s...  I'm CSAS bank bot.", name || 'there');
+                .text("Hello %s...  I'm a CSAS bank bot.", name || 'there');
         bot.send(reply);
         bot.beginDialog(message.address, "rootMenu")
     } else {
@@ -57,7 +57,7 @@ bot.on('conversationUpdate', function (message) {
             if (identity.id === message.address.bot.id) {
                 var reply = new builder.Message()
                     .address(message.address)
-                    .text("Hello %s...  I'm CSAS bank bot.", name || 'there');
+                    .text("Hello %s...  I'm a CSAS bank bot.", name || 'there');
                 bot.send(reply);
                 bot.beginDialog(message.address, "rootMenu")
             }
