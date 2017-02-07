@@ -157,7 +157,7 @@ bot.dialog('selectCardMenu', [
     function (session) {
         api.refreshCards(session)
         .then(function(result){
-                builder.Prompts.choice(session, "Select your card", getCardsPromt(session));    
+                builder.Prompts.choice(session, "Select your card to show more info", getCardsPromt(session));    
             }
         )        
         .catch(function(e){
@@ -167,72 +167,13 @@ bot.dialog('selectCardMenu', [
     },
     function (session, results) {
         session.userData.cardIndex = results.response.index;        
-        session.replaceDialog('cardsDialog');
-    },
-    function (session) {
-        // Reload menu
+        var cardBalance = ui.cardBalance(session.userData.cards.cards[session.userData.cardIndex]);                
+        session.send(cardBalance);
         session.replaceDialog('selectCardMenu');
     }
 ])
 .reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i })
 .triggerAction({ matches: /^(cards|\?)/i });;
-
-
-
-bot.dialog('cardsDialog', [
-    function (session) {
-        builder.Prompts.choice(session, "What do you want to do? Type 'cards' to return to cards selection or 'home'", "Show balance|Show detail");
-    },
-    function (session, results) {
-        switch (results.response.index) {
-            case 0:
-                var cardBalance = ui.cardBalance(session.userData.cards.cards[session.userData.cardIndex]);
-                
-                session.send(cardBalance);
-                break;
-            case 1:                
-                api.cardDetail(session)
-                    .then(function(result){
-                            if(result){
-                                session.send(result);}
-                            else{
-                                session.send(ui.cardDetail(session.userData.card));                                         
-                            }
-                            session.replaceDialog('cardsDialog');                               
-                        }
-                    )        
-                    .catch(function(e){
-                        console.log("Catch handler " + e)
-                        session.replaceDialog('cardsDialog');     
-                    });
-                
-                // api.cardDetail(session, function () {
-                //     session.send(ui.cardDetail(session.userData.card));         
-                //     session.replaceDialog('cardsDialog');                               
-                // },
-                // authorize(session, function(){
-                //     session.replaceDialog('cardsDialog', results);
-                // }),                           
-                // function(){
-                //     // error
-                //     session.send("API call error, card not found.");
-                //     session.replaceDialog('cardsDialog');
-                // });
-                
-                break;            
-            default:
-                
-                break;
-        }
-        
-    },
-    function (session) {
-        // Reload menu
-        session.replaceDialog('cardsDialog');
-    }
-])
-.reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i });
-
 
 // Setup Restify Server
 var server = restify.createServer();
@@ -268,7 +209,7 @@ function getCardsPromt(session)
 {
     var cardsPrompt = [];
     session.userData.cards.cards.forEach(function(card) {        
-        cardsPrompt.push(card.owner + '/' + card.number + " - " + card.state );
+        cardsPrompt.push(ui.shortCardInfo(card));
     }, this);
     return cardsPrompt;
 }

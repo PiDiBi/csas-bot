@@ -14,7 +14,10 @@ Number.prototype.format = function(n, x, s, c) {
 };
 // UI formatting
 module.exports = {
-    
+    shortCardInfo(card)
+    {
+        return card.productI18N + ' / ' + card.number + " - " + card.state + " - " + card.type;
+    },
     cardDetail: function(card)
     {
         var result = "";
@@ -22,7 +25,7 @@ module.exports = {
         result += 'Number: ' + card.number + '\n\r';
         result += 'Expire: ' + card.expiryDate + '\n\r';
         result += 'Type: ' + card.productI18N + '\n\r';
-        result += 'Credit Card: ' + card.creditCard + '\n\r';
+        result += 'Credit Card: ' + card.creditCard + '\n\r';        
         return result;
     },
     accountNumber: function(account)
@@ -34,7 +37,7 @@ module.exports = {
         return transaction.amount.value.format(2, 3, '.', ',') + " " + transaction.amount.currency  + " - " + transaction.description + "\n\r";
     },
     cardBalance: function(card){
-        var result = '';
+        var result = module.exports.shortCardInfo(card) + "\n\r";
         if(card.balance)
         {
             result += 'Balance: ' + card.balance.value.format(2, 3, '.', ',') + ' ' + card.balance.currency + '\n\r';
@@ -47,14 +50,12 @@ module.exports = {
         {
             result += 'Limit: ' + card.limit.value.format(2, 3, '.', ',') + ' ' + card.limit.currency + '\n\r';
         }      
-        if(result=='')
-        {
-            result = 'Sorry no data availaible.';
-        }
+        result += 'Account: ' + card.mainAccount.accountno.number + '/' + card.mainAccount.accountno.bankCode +'\n\r';
+
         return result;
     },
     accountBalance(account){
-        return account.balance.value.format(2, 3, '.', ',') + " " + account.balance.currency
+        return  account.balance.value.format(2, 3, '.', ',') + " " + account.balance.currency
     }
 };
 
