@@ -45,6 +45,7 @@ bot.on('contactRelationUpdate', function (message) {
                 .address(message.address)
                 .text("Hello %s...  I'm CSAS bank bot.", name || 'there');
         bot.send(reply);
+        bot.beginDialog(message.address, "rootMenu")
     } else {
         // delete their data
     }
