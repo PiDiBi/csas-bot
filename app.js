@@ -28,23 +28,46 @@ var connector = new builder.ChatConnector({
     appId: process.env.MICROSOFT_APP_ID,
     appPassword: process.env.MICROSOFT_APP_PASSWORD
 });
+
 var bot = new builder.UniversalBot(connector, [    
     function (session) {
-        session.send("Hello... I'm a bank bot.");
+        session.send("Hello... I'm a CSAS bank bot.");
         //session.userData.access_token = "";
         session.userData.accounts = {};
         session.beginDialog('rootMenu');
     }
 ]);
-// Send notification as a proactive message
-    // var msg = new builder.Message()
-    //     .text("Bank bot");
-    // bot.send(msg, function (err) {
-    // });
+
+bot.on('contactRelationUpdate', function (message) {
+    if (message.action === 'add') {
+        var name = message.user ? message.user.name : null;
+        var reply = new builder.Message()
+                .address(message.address)
+                .text("Hello %s...  I'm CSAS bank bot.", name || 'there');
+        bot.send(reply);
+    } else {
+        // delete their data
+    }
+});
+bot.on('conversationUpdate', function (message) {
+    if (message.membersAdded) {
+        var name = message.user ? message.user.name : null;
+        message.membersAdded.forEach(function (identity) {
+            if (identity.id === message.address.bot.id) {
+                var reply = new builder.Message()
+                    .address(message.address)
+                    .text("Hello %s...  I'm CSAS bank bot.", name || 'there');
+                bot.send(reply);
+                bot.beginDialog(message.address, "rootMenu")
+            }
+        });
+    }
+});
+//"Hello " + name || 'there' +"...  I'm CSAS bank bot. Thanks for adding me. Say 'hello' to start."
 
 bot.dialog('rootMenu', [
     function (session) {
-        builder.Prompts.choice(session, "Select", "Accounts|Cards");                          
+        builder.Prompts.choice(session, "Select", "Accounts|Cards");
     },
     function (session, results) {
         switch (results.response.index) {
