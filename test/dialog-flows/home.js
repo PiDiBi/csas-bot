@@ -19,6 +19,13 @@ module.exports = [
     out : "1"
   },
   {
+    in: "What do you want to do? Type 'accounts' to return to account selection or 'home' (1. Show balance or 2. Show history)",
+    out : "1"
+  },
+  {
+    in: "159.965.600,00 CZK"
+  },
+  {
     in: "What do you want to do? Type 'accounts' to return to account selection or 'home' (1. Show balance or 2. Show history)"
   }
 ]
