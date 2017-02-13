@@ -1,10 +1,26 @@
 {
+  "name": "csas-dev-bot",
+  "author": "David Bures",
+  "license": "MIT",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app",
+    "test": "./node_modules/.bin/mocha --reporter spec"
+  },
   "dependencies": {
     "async": "^2.1.4",
     "bluebird": "^3.4.7",
     "botbuilder": "^3.6.0",
     "botframework": "^0.18.0",
+    "dotenv-extended": "^1.0.4",
     "promise": "^7.1.1",
     "restify": "^4.3.0"
+  },
+  "devDependencies": {
+    "assert": "^1.4.1",
+    "mocha": "^3.2.0",
+    "nock": "^9.0.2"
   }
 }
