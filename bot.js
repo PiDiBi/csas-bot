@@ -18,7 +18,7 @@ function create(connector) {
 
     var bot = new builder.UniversalBot(connector, [    
         function (session) {                        
-            session.beginDialog('authDialog');
+            session.beginDialog('authorizeDialog');
         }
     ]);
 
@@ -209,6 +209,6 @@ function getCardsPromt(session)
 
 function createSigninCard(session, url) {
     return new builder.SigninCard(session)
-        .text('BotFramework Sign-in Card')
+        .text('CSAS Sandbox')
         .button('Sign-in', url);
 }
