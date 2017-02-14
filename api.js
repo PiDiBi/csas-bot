@@ -137,7 +137,7 @@ module.exports = {
         //https://api.csas.cz/sandbox/webapi/api/v3/netbanking/my/contracts/buildings
     },
 
-    oauthCodeExchangeForAuth:  function(code, state)
+    oauthCodeExchangeForAuth:  function(code)
     {
         var form = {
             'client_id': 'WebExpoClient',

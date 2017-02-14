@@ -7,13 +7,8 @@ var PORT = process.env.port || process.env.PORT || 3978;
 var HOSTNAME = process.env.WEBSITE_HOSTNAME ? ("https://" + process.env.WEBSITE_HOSTNAME) : ("http://localhost" + ":" + PORT);
 
 // use demo user : 7777777777 / any password
-// token type url
-var useServerSideOAuth = true;
-var authCallbackUrl = 'https://api.csas.cz/sandbox/widp/oauth2/auth?state=profil&redirect_uri='+HOSTNAME+'/authCallback&client_id=WebExpoClient&response_type=token';
-// code type url - server side
 var authCallbackUrlCode = 'https://api.csas.cz/sandbox/widp/oauth2/auth?redirect_uri='+HOSTNAME+'/authCallbackServer&client_id=WebExpoClient&response_type=code';
 var authCodeUrl = 'https://api.csas.cz/sandbox/widp/oauth2/auth';
-
 
 function create(connector) {
     
@@ -22,12 +17,8 @@ function create(connector) {
     //=========================================================
 
     var bot = new builder.UniversalBot(connector, [    
-        function (session) {
-            //session.send("Hello... I'm a CSAS bank bot.");
-            
-            //session.userData.access_token = "";
-            session.userData.accounts = {};
-            session.beginDialog('rootMenu');
+        function (session) {                        
+            session.beginDialog('authDialog');
         }
     ]);
 
@@ -38,7 +29,7 @@ function create(connector) {
                     .address(message.address)
                     .text("Hello %s...  I'm a CSAS bank bot.", name || 'there');
             bot.send(reply);
-            bot.beginDialog(message.address, "rootMenu")
+            bot.beginDialog(message.address, "authorizeDialog")
         } else {
             // delete their data
         }
@@ -52,19 +43,14 @@ function create(connector) {
                         .address(message.address)
                         .text("Hello %s...  I'm a CSAS bank bot.", name || 'there');
                     bot.send(reply);
-                    bot.beginDialog(message.address, "rootMenu")
+                    bot.beginDialog(message.address, "authorizeDialog")
                 }
             });
         }
     });
-    //"Hello " + name || 'there' +"...  I'm CSAS bank bot. Thanks for adding me. Say 'hello' to start."
-
+          
     bot.dialog('rootMenu', [
-        function (session) {
-            var b = new Buffer(JSON.stringify(session.message.address));            
-            var card = createSigninCard(session, authCallbackUrlCode + "&state=" + b.toString('base64'));
-            var msg = new builder.Message(session).addAttachment(card);
-            session.send(msg);
+        function (session) {            
 
             builder.Prompts.choice(session, "Select", "Accounts|Cards");
         },
@@ -94,25 +80,14 @@ function create(connector) {
         function (session, nextDialog) { //, next)
             session.dialogData.nextDialog = nextDialog; 
             session.userData.accountsPrompt = [];
-            session.send("You are not authorised. \n\r Click on the URL to authorize yourself and send me code you will see.");
-            
-            var card = createSigninCard(session, useServerSideOAuth ? authCallbackUrlCode :  authCallbackUrl);
+            session.userData.access_token = "";
+            session.userData.accounts = {};
+            var b = new Buffer(JSON.stringify(session.message.address));            
+            var card = createSigninCard(session, authCallbackUrlCode + "&state=" + b.toString('base64'));
             // attach the card to the reply message
             var msg = new builder.Message(session).addAttachment(card);
             session.send(msg);
-
-            builder.Prompts.text(session, "Paste auth code, please.");            
-                        
-        },
-        function (session, results, next) {
-            // next is next waterfall
-            if (results.response) {
-                session.userData.access_token = results.response;
-                session.replaceDialog(session.dialogData.nextDialog);
-            }
-            else{
-                //err();
-            }         
+               
         }
     ])
     .reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i });
