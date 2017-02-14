@@ -8,15 +8,14 @@ var HOSTNAME = process.env.WEBSITE_HOSTNAME ? ("https://" + process.env.WEBSITE_
 
 // use demo user : 7777777777 / any password
 // token type url
-var useServerSideOAuth = false;
+var useServerSideOAuth = true;
 var authCallbackUrl = 'https://api.csas.cz/sandbox/widp/oauth2/auth?state=profil&redirect_uri='+HOSTNAME+'/authCallback&client_id=WebExpoClient&response_type=token';
 // code type url - server side
-var authCallbackUrlCode = 'https://api.csas.cz/sandbox/widp/oauth2/auth?state=profil&redirect_uri='+HOSTNAME+'/authCallbackServer&client_id=WebExpoClient&response_type=code';
+var authCallbackUrlCode = 'https://api.csas.cz/sandbox/widp/oauth2/auth?redirect_uri='+HOSTNAME+'/authCallbackServer&client_id=WebExpoClient&response_type=code';
 var authCodeUrl = 'https://api.csas.cz/sandbox/widp/oauth2/auth';
 
 
 function create(connector) {
-
     
     //=========================================================
     // Bot Setup
@@ -24,7 +23,8 @@ function create(connector) {
 
     var bot = new builder.UniversalBot(connector, [    
         function (session) {
-            session.send("Hello... I'm a CSAS bank bot.");
+            //session.send("Hello... I'm a CSAS bank bot.");
+            
             //session.userData.access_token = "";
             session.userData.accounts = {};
             session.beginDialog('rootMenu');
@@ -61,6 +61,11 @@ function create(connector) {
 
     bot.dialog('rootMenu', [
         function (session) {
+            var b = new Buffer(JSON.stringify(session.message.address));            
+            var card = createSigninCard(session, authCallbackUrlCode + "&state=" + b.toString('base64'));
+            var msg = new builder.Message(session).addAttachment(card);
+            session.send(msg);
+
             builder.Prompts.choice(session, "Select", "Accounts|Cards");
         },
         function (session, results) {
@@ -90,7 +95,14 @@ function create(connector) {
             session.dialogData.nextDialog = nextDialog; 
             session.userData.accountsPrompt = [];
             session.send("You are not authorised. \n\r Click on the URL to authorize yourself and send me code you will see.");
-            builder.Prompts.text(session, useServerSideOAuth ? authCallbackUrlServer :  authCallbackUrl);            
+            
+            var card = createSigninCard(session, useServerSideOAuth ? authCallbackUrlCode :  authCallbackUrl);
+            // attach the card to the reply message
+            var msg = new builder.Message(session).addAttachment(card);
+            session.send(msg);
+
+            builder.Prompts.text(session, "Paste auth code, please.");            
+                        
         },
         function (session, results, next) {
             // next is next waterfall
@@ -152,7 +164,7 @@ function create(connector) {
                             }
                         )        
                         .catch(function(e){
-                            console.log("Catch handler " + e)
+                            console.log("Catch handler " + e);
                             authorize(session, 'accountDialog');
                         });
                     
@@ -218,4 +230,10 @@ function getCardsPromt(session)
  function authorize(session, nextDialog)
 {        
     session.replaceDialog('authorizeDialog', nextDialog);
+}
+
+function createSigninCard(session, url) {
+    return new builder.SigninCard(session)
+        .text('BotFramework Sign-in Card')
+        .button('Sign-in', url);
 }
