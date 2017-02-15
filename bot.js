@@ -103,6 +103,7 @@ function create(connector) {
             )        
             .catch(function(e){
                 console.log("Catch handler " + e)
+                session.send(e.toString());
                 var exceptionTelemetry = telemetryModule.createTelemetry(session);
                 exceptionTelemetry.exception = e.toString();
                 appInsightsClient.trackException(exceptionTelemetry);

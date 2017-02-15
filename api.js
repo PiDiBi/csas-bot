@@ -181,7 +181,12 @@ module.exports = {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'Content-Length': contentLength
                 }}, function (error, response, body) {
-                    if(response.statusCode==403)
+                    if(error)
+                    {                        
+                        appInsightsClient.trackException(error);         
+                        reject(error);
+                    }
+                    else if(response.statusCode==403)
                     {                    
                         reject(new Error('unauthorized'));                        
                     }                
