@@ -244,7 +244,7 @@ function sendGreetings(message, bot)
                 var telemetry = telemetryModule.createTelemetry(session, { where: 'conversationUpdate' });
                 appInsightsClient.trackTrace('start', telemetry);    
                 session.send("Hello %s...  I'm a CSAS bank bot ...", name || 'there');
-                bot.replaceDialog(message.address, "authorizeDialog", "rootMenu")
+                bot.beginDialog(message.address, "authorizeDialog", "rootMenu")
             }); 
 
         }
