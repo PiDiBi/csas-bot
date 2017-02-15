@@ -22,21 +22,7 @@ function create(connector) {
     // Bot Setup
     //=========================================================
 
-    var bot = new builder.UniversalBot(connector, [    
-        function (session) {  
-            //for webchat                    
-            if(session.userData.access_token == ""){
-                session.replaceDialog('authorizeDialog', 'rootMenu');
-            }  
-            else{
-                // this causes to be ther menu second time, but first it somehow lost
-                 session.replaceDialog('rootMenu');
-            }
-            var telemetry = telemetryModule.createTelemetry(session, { where: '' });
-            appInsightsClient.trackTrace('start', telemetry);
-            
-        }
-    ]);
+    var bot = new builder.UniversalBot(connector);
 
     bot.on('contactRelationUpdate', function (message) {
         // for webchat
