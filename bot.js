@@ -28,9 +28,9 @@ function create(connector) {
             if(session.userData.access_token == ""){
                 session.replaceDialog('authorizeDialog', 'rootMenu');
             }  
-            // else{
-            //     session.replaceDialog('rootMenu');
-            // }
+            else{
+                 session.replaceDialog('rootMenu');
+            }
             var telemetry = telemetryModule.createTelemetry(session, { where: '' });
             appInsightsClient.trackTrace('start', telemetry);
             
