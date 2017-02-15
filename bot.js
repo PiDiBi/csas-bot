@@ -237,7 +237,7 @@ function sendGreetings(message, bot)
                 appInsightsClient.trackTrace('start', telemetry);    
                 session.send("Hello %s...  I'm a CSAS bank bot ...", name || 'there');
                 session.userData.nextDialog = "rootMenu";
-                sendSignInCard(session);
+                session.replaceDialog('authorizeDialog', 'rootMenu')
             }); 
 
         }
