@@ -25,12 +25,13 @@ function create(connector) {
     var bot = new builder.UniversalBot(connector, [    
         function (session) {  
             //for webchat                    
-            // if(session.userData.access_token == ""){
-            //     session.replaceDialog('authorizeDialog', 'rootMenu');
-            // }  
-            // else{
-            //      session.replaceDialog('rootMenu');
-            // }
+            if(session.userData.access_token == ""){
+                session.replaceDialog('authorizeDialog', 'rootMenu');
+            }  
+            else{
+                // this causes to be ther menu second time, but first it somehow lost
+                 session.replaceDialog('rootMenu');
+            }
             var telemetry = telemetryModule.createTelemetry(session, { where: '' });
             appInsightsClient.trackTrace('start', telemetry);
             
@@ -39,11 +40,11 @@ function create(connector) {
 
     bot.on('contactRelationUpdate', function (message) {
         // for webchat
-        if (message.action === 'add') {            
-            sendGreetings(message, bot);
-        } else {
-            // delete their data
-        }
+        // if (message.action === 'add') {            
+        //     sendGreetings(message, bot);
+        // } else {
+        //     // delete their data
+        // }
     });
     bot.on('conversationUpdate', function (message) {
         // for skype and emulator
