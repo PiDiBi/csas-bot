@@ -47,7 +47,9 @@ function create(connector) {
           
     bot.dialog('rootMenu', [
         function (session) {            
-            builder.Prompts.choice(session, "Select", "Accounts|Cards");
+            builder.Prompts.choice(session, "Select what do you want to show", "Accounts|Cards", {
+                    listStyle: builder.ListStyle["button"]
+                  });
         },
         function (session, results) {
             switch (results.response.index) {
@@ -95,7 +97,9 @@ function create(connector) {
 
             api.refreshAccounts(session)
                 .then(function(result){
-                        builder.Prompts.choice(session, "Select your account", getAccountsPromt(session));
+                        builder.Prompts.choice(session, "Select your account", getAccountsPromt(session), {
+                            listStyle: builder.ListStyle["button"]
+                        });
                     }
                 )        
                 .catch(function(e){
@@ -123,7 +127,9 @@ function create(connector) {
         function (session) {
             var telemetry = telemetryModule.createTelemetry(session);
             appInsightsClient.trackEvent('account selected', telemetry);
-            builder.Prompts.choice(session, "What do you want to do? Type 'accounts' to return to account selection or 'home'", "Show balance|Show history");
+            builder.Prompts.choice(session, "What do you want to do? Type 'accounts' to return to account selection or 'home'", "Show balance|Show history", {
+                    listStyle: builder.ListStyle["button"]
+                  });
         },
         function (session, results) {
             switch (results.response.index) {
@@ -170,7 +176,9 @@ function create(connector) {
             appInsightsClient.trackEvent('cards selected', telemetry);
             api.refreshCards(session)
             .then(function(result){
-                    builder.Prompts.choice(session, "Select your card to show more info", getCardsPromt(session));    
+                    builder.Prompts.choice(session, "Select your card to show more info", getCardsPromt(session), {
+                    listStyle: builder.ListStyle["button"]
+                  });    
                 }
             )        
             .catch(function(e){
@@ -246,6 +254,6 @@ function sendSignInCard(session){
 
 function createSigninCard(session, url) {
     return new builder.SigninCard(session)
-        .text('CSAS Sandbox, please sign-in first')
+        .text('I know, who you are, but our bank doesn\'t\n\rPlease sign-in first')
         .button('Sign-in', url);
 }
