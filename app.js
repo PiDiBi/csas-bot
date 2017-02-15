@@ -38,6 +38,7 @@ function authCallbackServer(req, res, next) {
             var session = chatBot.loadSession(state, function(error, session){
                 session.userData.access_token = JSON.parse(result).access_token;
                 session.send("You are authorized now! " + session.userData.access_token);           
+                session.send("Next step: " + session.userData.nextDialog);           
                 appInsightsClient.trackEvent('auth success', { nextDialog : session.userData.nextDialog })     
                 session.replaceDialog(session.userData.nextDialog);
             });            
