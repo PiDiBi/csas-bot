@@ -40,7 +40,7 @@ function authCallbackServer(req, res, next) {
                 session.send("You are authorized now!");                
                 session.replaceDialog(session.userData.nextDialog);
             });            
-            chatBot.send(reply);
+            
         }).catch(function(e){
             console.log("Catch handler " + e);                               
             appInsightsClient.trackException(e);         
