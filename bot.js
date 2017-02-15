@@ -18,7 +18,7 @@ function create(connector) {
 
     var bot = new builder.UniversalBot(connector, [    
         function (session) {                        
-            session.beginDialog('authorizeDialog');
+            session.beginDialog('authorizeDialog', 'rootMenu');
         }
     ]);
 
@@ -29,7 +29,7 @@ function create(connector) {
                     .address(message.address)
                     .text("Hello %s...  I'm a CSAS bank bot.", name || 'there');
             bot.send(reply);
-            bot.beginDialog(message.address, "authorizeDialog")
+            bot.beginDialog(message.address, "authorizeDialog", 'rootMenu')
         } else {
             // delete their data
         }
@@ -43,7 +43,7 @@ function create(connector) {
                         .address(message.address)
                         .text("Hello %s...  I'm a CSAS bank bot.", name || 'there');
                     bot.send(reply);
-                    bot.beginDialog(message.address, "authorizeDialog")
+                    bot.beginDialog(message.address, "authorizeDialog", "rootMenu")
                 }
             });
         }
@@ -82,6 +82,7 @@ function create(connector) {
             session.userData.accountsPrompt = [];
             session.userData.access_token = "";
             session.userData.accounts = {};
+            session.userData.nextDialog = nextDialog;
             var b = new Buffer(JSON.stringify(session.message.address));            
             var card = createSigninCard(session, authCallbackUrlCode + "&state=" + b.toString('base64'));
             // attach the card to the reply message
