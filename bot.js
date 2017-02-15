@@ -26,13 +26,15 @@ function create(connector) {
         function (session) {                        
             var telemetry = telemetryModule.createTelemetry(session, { where: '' });
             appInsightsClient.trackTrace('start', telemetry);
-            session.beginDialog('authorizeDialog', 'rootMenu');
+            //session.beginDialog('authorizeDialog', 'rootMenu');
         }
     ]);
 
     bot.on('contactRelationUpdate', function (message) {
         // for webchat? - twice sign in - something wrong
         if (message.action === 'add') {
+            var telemetry = telemetryModule.createTelemetry(session, { where: 'contactRelationUpdate' });
+            appInsightsClient.trackTrace('start', telemetry);
             sendGreetings(message, bot);
         } else {
             // delete their data
@@ -41,6 +43,8 @@ function create(connector) {
     bot.on('conversationUpdate', function (message) {
         // for skype and emulator
         if (message.membersAdded) {
+            var telemetry = telemetryModule.createTelemetry(session, { where: 'conversationUpdate' });
+            appInsightsClient.trackTrace('start', telemetry);
             sendGreetings(message, bot);
         }
     });
@@ -232,18 +236,14 @@ function sendGreetings(message, bot)
 {
     var name = message.user ? message.user.name : null;
     message.membersAdded.forEach(function (identity) {
-        if (identity.id === message.address.bot.id) {
-            // var reply = new builder.Message()
-            //     .address(message.address)
-            //     .text("Hello %s...  I'm a CSAS bank bot ...", name || 'there');
-            // bot.send(reply);
+        if (identity.id === message.address.bot.id) {            
             var session = bot.loadSession(message.address, function(error, session){
                 var telemetry = telemetryModule.createTelemetry(session, { where: 'conversationUpdate' });
                 appInsightsClient.trackTrace('start', telemetry);    
                 session.send("Hello %s...  I'm a CSAS bank bot ...", name || 'there');
+                bot.beginDialog(message.address, "authorizeDialog", "rootMenu")
             }); 
-            
-            bot.beginDialog(message.address, "authorizeDialog", "rootMenu")
+
         }
     });
 }
