@@ -5,6 +5,10 @@ var builder = require('botbuilder');
 var bot = require('./bot');
 var api = require('./api');
 
+var appInsights = require('applicationinsights');
+appInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATIONKEY).start();
+var appInsightsClient = appInsights.getClient();
+
 // Create chat bot
 var connector = new builder.ChatConnector({
     appId: process.env.MICROSOFT_APP_ID,
@@ -38,7 +42,10 @@ function authCallbackServer(req, res, next) {
             });            
             chatBot.send(reply);
         }).catch(function(e){
-            console.log("Catch handler " + e);                            
+            console.log("Catch handler " + e);                   
+            var exceptionTelemetry = telemetryModule.createTelemetry(session);
+            exceptionTelemetry.exception = e.toString();
+            appInsightsClient.trackException(exceptionTelemetry);         
         });
 
     res.writeHead(200, {

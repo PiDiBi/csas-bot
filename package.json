@@ -16,7 +16,8 @@
     "botframework": "^0.18.0",
     "dotenv-extended": "^1.0.4",
     "promise": "^7.1.1",
-    "restify": "^4.3.0"
+    "restify": "^4.3.0",
+    "applicationinsights": "^0.17.1"
   },
   "devDependencies": {
     "assert": "^1.4.1",

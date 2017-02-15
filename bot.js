@@ -10,6 +10,12 @@ var HOSTNAME = process.env.WEBSITE_HOSTNAME ? ("https://" + process.env.WEBSITE_
 var authCallbackUrlCode = 'https://api.csas.cz/sandbox/widp/oauth2/auth?redirect_uri='+HOSTNAME+'/authCallbackServer&client_id=WebExpoClient&response_type=code';
 var authCodeUrl = 'https://api.csas.cz/sandbox/widp/oauth2/auth';
 
+var telemetryModule = require('./telemetry-module.js');
+
+var appInsights = require('applicationinsights');
+appInsights.setup(process.env.APPINSIGHTS_INSTRUMENTATIONKEY).start();
+var appInsightsClient = appInsights.getClient();
+
 function create(connector) {
     
     //=========================================================
@@ -18,6 +24,8 @@ function create(connector) {
 
     var bot = new builder.UniversalBot(connector, [    
         function (session) {                        
+            var telemetry = telemetryModule.createTelemetry(session, { where: '' });
+            appInsightsClient.trackTrace('start', telemetry);
             session.beginDialog('authorizeDialog', 'rootMenu');
         }
     ]);
@@ -29,6 +37,11 @@ function create(connector) {
                     .address(message.address)
                     .text("Hello %s...  I'm a CSAS bank bot.", name || 'there');
             bot.send(reply);
+
+            var session = bot.loadSession(message.address, function(error, session){
+                var telemetry = telemetryModule.createTelemetry(session, { where: 'contactRelationUpdate' });
+                appInsightsClient.trackTrace('start', telemetry);    
+            }); 
             bot.beginDialog(message.address, "authorizeDialog", 'rootMenu')
         } else {
             // delete their data
@@ -43,6 +56,11 @@ function create(connector) {
                         .address(message.address)
                         .text("Hello %s...  I'm a CSAS bank bot.", name || 'there');
                     bot.send(reply);
+                    var session = bot.loadSession(message.address, function(error, session){
+                        var telemetry = telemetryModule.createTelemetry(session, { where: 'conversationUpdate' });
+                        appInsightsClient.trackTrace('start', telemetry);    
+                    }); 
+                    
                     bot.beginDialog(message.address, "authorizeDialog", "rootMenu")
                 }
             });
@@ -88,6 +106,8 @@ function create(connector) {
             // attach the card to the reply message
             var msg = new builder.Message(session).addAttachment(card);
             session.send(msg);
+            var telemetry = telemetryModule.createTelemetry(session);
+            appInsightsClient.trackEvent('authorizeDialog', telemetry);
                
         }
     ])
@@ -95,6 +115,9 @@ function create(connector) {
 
     bot.dialog('selectAccountMenu', [
         function (session) {
+            var telemetry = telemetryModule.createTelemetry(session);
+            appInsightsClient.trackEvent('accounts selected', telemetry);
+
             api.refreshAccounts(session)
             .then(function(result){
                     builder.Prompts.choice(session, "Select your account", getAccountsPromt(session));
@@ -102,6 +125,9 @@ function create(connector) {
             )        
             .catch(function(e){
                 console.log("Catch handler " + e)
+                var exceptionTelemetry = telemetryModule.createTelemetry(session);
+                exceptionTelemetry.exception = e.toString();
+                appInsightsClient.trackException(exceptionTelemetry);
                 authorize(session, 'selectAccountMenu');
             });
                     
@@ -120,6 +146,8 @@ function create(connector) {
 
     bot.dialog('accountDialog', [
         function (session) {
+            var telemetry = telemetryModule.createTelemetry(session);
+            appInsightsClient.trackEvent('account selected', telemetry);
             builder.Prompts.choice(session, "What do you want to do? Type 'accounts' to return to account selection or 'home'", "Show balance|Show history");
         },
         function (session, results) {
@@ -141,6 +169,9 @@ function create(connector) {
                         )        
                         .catch(function(e){
                             console.log("Catch handler " + e);
+                            var exceptionTelemetry = telemetryModule.createTelemetry(session);
+                            exceptionTelemetry.exception = e.toString();
+                            appInsightsClient.trackException(exceptionTelemetry);
                             authorize(session, 'accountDialog');
                         });
                     
@@ -160,6 +191,8 @@ function create(connector) {
 
     bot.dialog('selectCardMenu', [
         function (session) {
+            var telemetry = telemetryModule.createTelemetry(session);
+            appInsightsClient.trackEvent('cards selected', telemetry);
             api.refreshCards(session)
             .then(function(result){
                     builder.Prompts.choice(session, "Select your card to show more info", getCardsPromt(session));    
@@ -167,6 +200,9 @@ function create(connector) {
             )        
             .catch(function(e){
                 console.log("Catch handler " + e)
+                var exceptionTelemetry = telemetryModule.createTelemetry(session);
+                exceptionTelemetry.exception = e.toString();
+                appInsightsClient.trackException(exceptionTelemetry);
                 authorize(session, 'selectCardMenu');
             });                      
         },
