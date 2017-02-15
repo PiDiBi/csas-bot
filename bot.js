@@ -23,15 +23,16 @@ function create(connector) {
     //=========================================================
 
     var bot = new builder.UniversalBot(connector, [    
-        function (session) {                        
+        function (session) {  
+            //for webchat                      
             var telemetry = telemetryModule.createTelemetry(session, { where: '' });
             appInsightsClient.trackTrace('start', telemetry);
-            //session.beginDialog('authorizeDialog', 'rootMenu');
+            session.replaceDialog('authorizeDialog', 'rootMenu');
         }
     ]);
 
     bot.on('contactRelationUpdate', function (message) {
-        // for webchat? - twice sign in - something wrong
+        // for webchat
         if (message.action === 'add') {
             var telemetry = telemetryModule.createTelemetry(session, { where: 'contactRelationUpdate' });
             appInsightsClient.trackTrace('start', telemetry);
@@ -241,7 +242,7 @@ function sendGreetings(message, bot)
                 var telemetry = telemetryModule.createTelemetry(session, { where: 'conversationUpdate' });
                 appInsightsClient.trackTrace('start', telemetry);    
                 session.send("Hello %s...  I'm a CSAS bank bot ...", name || 'there');
-                bot.beginDialog(message.address, "authorizeDialog", "rootMenu")
+                bot.replaceDialog(message.address, "authorizeDialog", "rootMenu")
             }); 
 
         }
