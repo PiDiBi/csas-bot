@@ -42,10 +42,8 @@ function authCallbackServer(req, res, next) {
             });            
             chatBot.send(reply);
         }).catch(function(e){
-            console.log("Catch handler " + e);                   
-            var exceptionTelemetry = telemetryModule.createTelemetry(session);
-            exceptionTelemetry.exception = e.toString();
-            appInsightsClient.trackException(exceptionTelemetry);         
+            console.log("Catch handler " + e);                               
+            appInsightsClient.trackException(e);         
         });
 
     res.writeHead(200, {

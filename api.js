@@ -26,10 +26,8 @@ module.exports = {
                     'Authorization': session.userData.access_token
                 }}, function (error, response, body) {
                     if(error)
-                    {
-                        var exceptionTelemetry = telemetryModule.createTelemetry(session);
-                        exceptionTelemetry.exception = error.toString();
-                        appInsightsClient.trackException(exceptionTelemetry);         
+                    {                        
+                        appInsightsClient.trackException(error);         
                         reject(error);
                     }
                     else if(response.statusCode==403)
@@ -60,9 +58,7 @@ module.exports = {
                 }}, function (error, response, body) {
                     if(error)
                     {
-                        var exceptionTelemetry = telemetryModule.createTelemetry(session);
-                        exceptionTelemetry.exception = error.toString();
-                        appInsightsClient.trackException(exceptionTelemetry);         
+                        appInsightsClient.trackException(error);         
                         reject(error);
                     }
                     else if(response.statusCode == 403)
@@ -94,9 +90,7 @@ module.exports = {
                 }}, function (error, response, body) {
                     if(error)
                     {
-                        var exceptionTelemetry = telemetryModule.createTelemetry(session);
-                        exceptionTelemetry.exception = error.toString();
-                        appInsightsClient.trackException(exceptionTelemetry);         
+                        appInsightsClient.trackException(error);         
                         reject(error);
                     }
                     else if(response.statusCode==403)
@@ -127,9 +121,7 @@ module.exports = {
                 }}, function (error, response, body) {
                     if(error)
                     {
-                        var exceptionTelemetry = telemetryModule.createTelemetry(session);
-                        exceptionTelemetry.exception = error.toString();
-                        appInsightsClient.trackException(exceptionTelemetry);         
+                        appInsightsClient.trackException(error);         
                         reject(error);
                     }
                     else if(response.statusCode == 403)
