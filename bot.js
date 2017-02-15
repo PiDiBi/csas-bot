@@ -39,9 +39,7 @@ function create(connector) {
 
     bot.on('contactRelationUpdate', function (message) {
         // for webchat
-        if (message.action === 'add') {
-            var telemetry = telemetryModule.createTelemetry(session, { where: 'contactRelationUpdate' });
-            appInsightsClient.trackTrace('start', telemetry);
+        if (message.action === 'add') {            
             sendGreetings(message, bot);
         } else {
             // delete their data
@@ -49,9 +47,7 @@ function create(connector) {
     });
     bot.on('conversationUpdate', function (message) {
         // for skype and emulator
-        if (message.membersAdded) {
-            var telemetry = telemetryModule.createTelemetry(session, { where: 'conversationUpdate' });
-            appInsightsClient.trackTrace('start', telemetry);
+        if (message.membersAdded) {            
             sendGreetings(message, bot);
         }
     });
