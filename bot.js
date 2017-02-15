@@ -67,16 +67,17 @@ function create(connector) {
     .triggerAction({ matches: /^(home)/i });;
 
     bot.dialog('authorizeDialog', [
-        function (session, nextDialog) { //, next)
-            session.dialogData.nextDialog = nextDialog; 
+        function (session, nextDialog) { //, next)            
             session.userData.accountsPrompt = [];
             session.userData.access_token = "";
             session.userData.accounts = {};
+            
             session.userData.nextDialog = nextDialog;
-            sendSignInCard(session);
+            
             var telemetry = telemetryModule.createTelemetry(session);
             appInsightsClient.trackEvent('authorizeDialog', telemetry);
-               
+
+            sendSignInCard(session);               
         }
     ])
     .reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i });
