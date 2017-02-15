@@ -54,7 +54,7 @@ function create(connector) {
                 if (identity.id === message.address.bot.id) {
                     var reply = new builder.Message()
                         .address(message.address)
-                        .text("Hello %s...  I'm a CSAS bank bot.", name || 'there');
+                        .text("Hello %s...  I'm a CSAS bank bot ...", name || 'there');
                     bot.send(reply);
                     var session = bot.loadSession(message.address, function(error, session){
                         var telemetry = telemetryModule.createTelemetry(session, { where: 'conversationUpdate' });
