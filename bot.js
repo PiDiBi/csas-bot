@@ -31,39 +31,17 @@ function create(connector) {
     ]);
 
     bot.on('contactRelationUpdate', function (message) {
+        // for webchat? - twice sign in - something wrong
         if (message.action === 'add') {
-            var name = message.user ? message.user.name : null;
-            var reply = new builder.Message()
-                    .address(message.address)
-                    .text("Hello %s...  I'm a CSAS bank bot.", name || 'there');
-            bot.send(reply);
-
-            var session = bot.loadSession(message.address, function(error, session){
-                var telemetry = telemetryModule.createTelemetry(session, { where: 'contactRelationUpdate' });
-                appInsightsClient.trackTrace('start', telemetry);    
-            }); 
-            bot.beginDialog(message.address, "authorizeDialog", 'rootMenu')
+            sendGreetings(message, bot);
         } else {
             // delete their data
         }
     });
     bot.on('conversationUpdate', function (message) {
+        // for skype and emulator
         if (message.membersAdded) {
-            var name = message.user ? message.user.name : null;
-            message.membersAdded.forEach(function (identity) {
-                if (identity.id === message.address.bot.id) {
-                    var reply = new builder.Message()
-                        .address(message.address)
-                        .text("Hello %s...  I'm a CSAS bank bot ...", name || 'there');
-                    bot.send(reply);
-                    var session = bot.loadSession(message.address, function(error, session){
-                        var telemetry = telemetryModule.createTelemetry(session, { where: 'conversationUpdate' });
-                        appInsightsClient.trackTrace('start', telemetry);    
-                    }); 
-                    
-                    bot.beginDialog(message.address, "authorizeDialog", "rootMenu")
-                }
-            });
+            sendGreetings(message, bot);
         }
     });
           
@@ -248,4 +226,24 @@ function createSigninCard(session, url) {
     return new builder.SigninCard(session)
         .text('CSAS Sandbox')
         .button('Sign-in', url);
+}
+
+function sendGreetings(message, bot)
+{
+    var name = message.user ? message.user.name : null;
+    message.membersAdded.forEach(function (identity) {
+        if (identity.id === message.address.bot.id) {
+            // var reply = new builder.Message()
+            //     .address(message.address)
+            //     .text("Hello %s...  I'm a CSAS bank bot ...", name || 'there');
+            // bot.send(reply);
+            var session = bot.loadSession(message.address, function(error, session){
+                var telemetry = telemetryModule.createTelemetry(session, { where: 'conversationUpdate' });
+                appInsightsClient.trackTrace('start', telemetry);    
+                session.send("Hello %s...  I'm a CSAS bank bot ...", name || 'there');
+            }); 
+            
+            bot.beginDialog(message.address, "authorizeDialog", "rootMenu")
+        }
+    });
 }
