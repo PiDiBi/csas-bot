@@ -29,7 +29,7 @@ function create(connector) {
                 session.replaceDialog('authorizeDialog', 'rootMenu');
             }  
             else{
-                 session.replaceDialog('rootMenu');
+                 //session.replaceDialog('rootMenu');
             }
             var telemetry = telemetryModule.createTelemetry(session, { where: '' });
             appInsightsClient.trackTrace('start', telemetry);
