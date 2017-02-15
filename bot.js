@@ -86,11 +86,7 @@ function create(connector) {
             session.userData.access_token = "";
             session.userData.accounts = {};
             session.userData.nextDialog = nextDialog;
-            var b = new Buffer(JSON.stringify(session.message.address));            
-            var card = createSigninCard(session, authCallbackUrlCode + "&state=" + b.toString('base64'));
-            // attach the card to the reply message
-            var msg = new builder.Message(session).addAttachment(card);
-            session.send(msg);
+            sendSignInCard(session);
             var telemetry = telemetryModule.createTelemetry(session);
             appInsightsClient.trackEvent('authorizeDialog', telemetry);
                
@@ -229,11 +225,6 @@ function getCardsPromt(session)
     session.replaceDialog('authorizeDialog', nextDialog);
 }
 
-function createSigninCard(session, url) {
-    return new builder.SigninCard(session)
-        .text('CSAS Sandbox')
-        .button('Sign-in', url);
-}
 
 function sendGreetings(message, bot)
 {
@@ -244,9 +235,23 @@ function sendGreetings(message, bot)
                 var telemetry = telemetryModule.createTelemetry(session, { where: 'conversationUpdate' });
                 appInsightsClient.trackTrace('start', telemetry);    
                 session.send("Hello %s...  I'm a CSAS bank bot ...", name || 'there');
-                bot.beginDialog(message.address, "authorizeDialog", "rootMenu")
+                session.userData.nextDialog = "rootMenu";
+                sendSignInCard(session);
             }); 
 
         }
     });
+}
+function sendSignInCard(session){
+    var b = new Buffer(JSON.stringify(session.message.address));            
+    var card = createSigninCard(session, authCallbackUrlCode + "&state=" + b.toString('base64'));
+    // attach the card to the reply message
+    var msg = new builder.Message(session).addAttachment(card);
+    session.send(msg);
+}
+
+function createSigninCard(session, url) {
+    return new builder.SigninCard(session)
+        .text('CSAS Sandbox, please sign-in first')
+        .button('Sign-in', url);
 }
