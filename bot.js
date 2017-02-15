@@ -24,10 +24,16 @@ function create(connector) {
 
     var bot = new builder.UniversalBot(connector, [    
         function (session) {  
-            //for webchat                      
+            //for webchat                    
+            if(session.userData.access_token == ""){
+                session.replaceDialog('authorizeDialog', 'rootMenu');
+            }  
+            else{
+                session.replaceDialog('rootMenu');
+            }
             var telemetry = telemetryModule.createTelemetry(session, { where: '' });
             appInsightsClient.trackTrace('start', telemetry);
-            session.replaceDialog('authorizeDialog', 'rootMenu');
+            
         }
     ]);
 
