@@ -22,18 +22,24 @@ function create(connector) {
     // Bot Setup
     //=========================================================
 
-    var bot = new builder.UniversalBot(connector);
+    var bot = new builder.UniversalBot(connector, [    
+        function (session) {                        
+            var telemetry = telemetryModule.createTelemetry(session, { where: '' });
+            appInsightsClient.trackTrace('start', telemetry);
+            session.beginDialog('authorizeDialog', 'rootMenu');
+        }
+    ]);
 
     bot.on('contactRelationUpdate', function (message) {
-        // for webchat
-        // if (message.action === 'add') {            
-        //     sendGreetings(message, bot);
-        // } else {
-        //     // delete their data
-        // }
+        //The bot was added to or removed from a user's contact list
+        if (message.action === 'add') {            
+            sendGreetings(message, bot);
+        } else {
+            // delete their data
+        }
     });
     bot.on('conversationUpdate', function (message) {
-        // for skype and emulator
+        // Your bot was added to a conversation or other conversation metadata changed. 
         if (message.membersAdded) {            
             sendGreetings(message, bot);
         }
@@ -41,7 +47,6 @@ function create(connector) {
           
     bot.dialog('rootMenu', [
         function (session) {            
-
             builder.Prompts.choice(session, "Select", "Accounts|Cards");
         },
         function (session, results) {
@@ -71,7 +76,7 @@ function create(connector) {
             session.userData.accountsPrompt = [];
             session.userData.access_token = "";
             session.userData.accounts = {};
-            
+
             session.userData.nextDialog = nextDialog;
             
             var telemetry = telemetryModule.createTelemetry(session);
@@ -80,7 +85,8 @@ function create(connector) {
             sendSignInCard(session);               
         }
     ])
-    .reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i });
+    .reloadAction('showMenu', null, { matches: /^(menu|help|\?)/i })
+    .triggerAction({ matches: /^(login)/i });;
 
     bot.dialog('selectAccountMenu', [
         function (session) {
@@ -223,8 +229,8 @@ function sendGreetings(message, bot)
                 var telemetry = telemetryModule.createTelemetry(session, { where: 'conversationUpdate' });
                 appInsightsClient.trackTrace('start', telemetry);    
                 session.send("Hello %s...  I'm a CSAS bank bot ...", name || 'there');
-                session.userData.nextDialog = "rootMenu";
-                session.replaceDialog('authorizeDialog', 'rootMenu')
+                // session.userData.nextDialog = "rootMenu";
+                // session.replaceDialog('authorizeDialog', 'rootMenu')
             }); 
 
         }
