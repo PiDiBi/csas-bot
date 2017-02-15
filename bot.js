@@ -97,18 +97,17 @@ function create(connector) {
             appInsightsClient.trackEvent('accounts selected', telemetry);
 
             api.refreshAccounts(session)
-            .then(function(result){
-                    builder.Prompts.choice(session, "Select your account", getAccountsPromt(session));
-                }
-            )        
-            .catch(function(e){
-                console.log("Catch handler " + e)
-                session.send(e.toString());
-                var exceptionTelemetry = telemetryModule.createTelemetry(session);
-                exceptionTelemetry.exception = e.toString();
-                appInsightsClient.trackException(exceptionTelemetry);
-                authorize(session, 'selectAccountMenu');
-            });
+                .then(function(result){
+                        builder.Prompts.choice(session, "Select your account", getAccountsPromt(session));
+                    }
+                )        
+                .catch(function(e){
+                    console.log("Catch handler " + e);
+                    var exceptionTelemetry = telemetryModule.createTelemetry(session);
+                    exceptionTelemetry.exception = e.toString();
+                    appInsightsClient.trackException(exceptionTelemetry);
+                    authorize(session, 'selectAccountMenu');
+                });
                     
         },
         function (session, results) {
@@ -178,7 +177,7 @@ function create(connector) {
                 }
             )        
             .catch(function(e){
-                console.log("Catch handler " + e)
+                console.log("Catch handler " + e);
                 var exceptionTelemetry = telemetryModule.createTelemetry(session);
                 exceptionTelemetry.exception = e.toString();
                 appInsightsClient.trackException(exceptionTelemetry);
