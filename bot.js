@@ -254,6 +254,6 @@ function sendSignInCard(session){
 
 function createSigninCard(session, url) {
     return new builder.SigninCard(session)
-        .text('I know, who you are, but our bank doesn\'t\n\rPlease sign-in first')
+        .text('I know, who you are, but our bank doesn\'t\n\rPlease sign-in first. (Use 7777777777 and any password).')
         .button('Sign-in', url);
 }
